@@ -1,0 +1,14 @@
+img {
+  width: 300px;
+  position: relative;
+  z-index: 3;
+}
+
+.imageAccessory {
+  width: 100px;
+}
+.front {
+  width: 300px;
+  position: absolute;
+  z-index: 10;
+}
