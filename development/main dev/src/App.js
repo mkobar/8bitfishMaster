@@ -11,6 +11,8 @@ import mergeImages from "merge-images";
 import { Canvas, Image } from "canvas";
 import Web3 from "web3";
 import axios from "axios";
+import { Switch, Route, Link } from "react-router-dom";
+import Details from "./components/Details";
 const chance = require("chance").Chance();
 const App = () => {
   const [web3, setWeb3] = useState(null);
@@ -22,41 +24,10 @@ const App = () => {
   const [userTokensUpdated, setUserTokensUpdated] = useState(false);
   const [currentFish, setCurrentFish] = useState("");
 
-  // const [rarity, setRarity] = useState("Common"); // fish gen
-  // const [color, setColor] = useState(media.CF1E.asset);
-
-  // const [accessoryA, setAccessoryA] = useState(media.blank);
-  // const [accessoryAImageTrait, setAccessoryAImageTrait] = useState("");
-  // const [accessoryATitleTrait, setAccessoryATitleTrait] = useState("");
-  // const [accessoryAColorTrait, setAccessoryAColorTrait] = useState("");
-
-  // const [accessoryB, setAccessoryB] = useState(media.blank);
-  // const [accessoryBImageTrait, setAccessoryBImageTrait] = useState("");
-  // const [accessoryBTitleTrait, setAccessoryBTitleTrait] = useState("");
-  // const [accessoryBColorTrait, setAccessoryBColorTrait] = useState("");
-
-  // const [accessoryC, setAccessoryC] = useState(media.blank);
-  // const [accessoryCImageTrait, setAccessoryCImageTrait] = useState("");
-  // const [accessoryCTitleTrait, setAccessoryCTitleTrait] = useState("");
-  // const [accessoryCColorTrait, setAccessoryCColorTrait] = useState("");
-
-  // const [accessoryD, setAccessoryD] = useState(media.blank);
-  // const [accessoryDImageTrait, setAccessoryDImageTrait] = useState("");
-  // const [accessoryDTitleTrait, setAccessoryDTitleTrait] = useState("");
-  // const [accessoryDColorTrait, setAccessoryDColorTrait] = useState("");
-
-  // const [currentFish, setCurrentFish] = useState("");
-  // const [background, setBackground] = useState(media.commonBG.asset);
-  // const [fishNameTrait, setFishNameTrait] = useState("clown fish");
-  // const [hexTrait, setHexTrait] = useState("");
-  // const [variant, setVariant] = useState();
-  // const [colorTrait, setColorTrait] = useState("");
-
   //PUT IN ENV
   const pinata_api_key = "94400bd517a6e2878d33";
   const pinata_secret_api_key =
     "261626edb4e2063cb7b7c9cf044b8f4b0ee9f79d8d5a2fb73e06c59038dcadc3";
-
   async function loadWeb3() {
     if (window.ethereum) {
       window.web3 = new Web3(window.ethereum);
@@ -85,35 +56,40 @@ const App = () => {
       const abi = GenerateFish.abi;
       const address = networkData.address;
       const contract = new web3.eth.Contract(abi, address);
-      const totalSupply = await contract.methods.totalSupply().call();
-      for (let i = 1; i <= totalSupply; i++) {
-        const tokens = await contract.methods.tokens(i - 1).call();
-        setTotalTokens((currentTokens) => [tokens, ...currentTokens]);
-      }
+      setTotalTokens(await totalSupply(contract));
       setContract(contract);
     } else {
       window.alert("Smart contract not deployed to detected network.");
     }
   }
 
+  const totalSupply = async (contract) => {
+    const totalSupply = await contract.methods.totalSupply().call();
+    const totalTokens = [];
+    for (let i = 1; i <= totalSupply; i++) {
+      await contract.methods
+        .tokens(i - 1)
+        .call()
+        .then((token) => totalTokens.push(Number(token)));
+      // setTotalTokens((currentTokens) => [tokens, ...currentTokens]);
+    }
+    return totalTokens;
+  };
+
   const currentUserTokens = async () => {
-    const currentTotalTokens = totalTokens.map(Number).sort();
-    const owner = accounts[0];
-    console.log(Number(await getBalanceOf(owner)));
+    const currentTotalTokens = await totalSupply(contract);
+    // const owner = accounts[0];
+    // console.log(Number(await getBalanceOf(owner))); //until balance of owner for performance
     for (let i = 1; i <= currentTotalTokens.length; i++) {
       if (Number(await getOwnerOf(i)) === Number(await accounts[0])) {
-        console.log("token uri", await getTokenURI(i));
         userTokens.push(await getTokenURI(i));
-      } else {
-        console.log(`token ${i} = bad`);
       }
     }
-    console.log("usertokens", userTokens);
     setUserTokens(userTokens);
     setUserTokensUpdated(true);
   };
+
   const getTokenURI = async (tokenId) => {
-    console.log("tokenid", tokenId);
     let output;
     await contract.methods
       .getTokenURI(tokenId)
@@ -126,12 +102,11 @@ const App = () => {
             "Content-Type": "application/json",
           },
         });
-        console.log("tokenuri data", tokenURIData.data);
         output = tokenURIData.data;
       });
-    console.log(output);
     return output;
   };
+
   const transferToken = async () => {
     const to = recipient;
     const tokenId = 2;
@@ -264,7 +239,6 @@ const App = () => {
         console.log("bad", error);
       });
   };
-  userTokens.map((test) => console.log(test[1].currentFish.name));
 
   const whatRarity = useCallback(
     async (rarity) => {
@@ -303,126 +277,49 @@ const App = () => {
 
   return (
     <div className="App">
-      {!web3 ? (
-        <div>Loading Web3, accounts, and contract...</div>
-      ) : (
+      <Switch>
+        <Route path="/details/:tokenId">
+          <Details contract={contract} axios={axios} />
+        </Route>
         <div>
-          <img src={currentFish} alt="currentFish" />
-          <button onClick={generate}>generate</button>
-          <button onClick={currentUserTokens}>currentusertokens</button>
-          <div>{accounts}</div>
-          <br />
-          totalSupply
-          {totalTokens.map((tokens) => (
-            <div key={tokens}>{tokens}</div>
-          ))}
-        </div>
-      )}
-      <label>From YOU ({accounts}) to </label>
-      <input
-        placeholder="recipient address"
-        type="text"
-        value={recipient}
-        onChange={(e) => setRecipient(e.target.value)}
-      />
-      <button onClick={transferToken}>transferToken</button>
-      <br />
-      <br />
-      <p>
-        Your tokens ({accounts}): {userTokens}
-      </p>
-      {userTokensUpdated ? (
-        _.map(userTokens, (tokens, key) => {
-          return (
-            <React.Fragment key={chance.integer()}>
-              <img key={tokens[0]} src={tokens[0]} alt="" />
-              <button>transfer</button>
-              <p key={tokens[1].currentFish.name}>
-                name: {tokens[1].currentFish.name}
-              </p>
-              <p key={tokens[1].currentFish.issue}>
-                issue: {tokens[1].currentFish.issue}
-              </p>
-              <p key={tokens[1].currentFish.rarity}>
-                rarity: {tokens[1].currentFish.rarity}
-              </p>
-              <p key={tokens[1].currentFish.colorTrait}>
-                colorTrait: {tokens[1].currentFish.base.colorTrait}
-              </p>
-              <p key={tokens[1].currentFish.variant}>
-                variant: {tokens[1].currentFish.base.variant}
-              </p>
-            </React.Fragment>
-          );
-        })
-      ) : (
-        // userTokens.map((tokens) => tokens.map((tokens) => console.log(tokens)))
-        <h1>false</h1>
-      )}
+          {!web3 ? (
+            <div>Loading Web3, accounts, and contract...</div>
+          ) : (
+            <div>
+              <img src={currentFish} alt="currentFish" />
+              <button onClick={generate}>generate</button>
+              <button onClick={currentUserTokens}>currentusertokens</button>
+              <p>{accounts}</p>
+              <p>totalSupply - {totalTokens}</p>
+            </div>
+          )}
+          <label>From YOU ({accounts}) to </label>
+          <input
+            placeholder="recipient address"
+            type="text"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+          />
+          <button onClick={transferToken}>transferToken</button>
 
-      {/* (<img key={tokens} src={tokens} alt="" />)(<h1>{tokens[1].currentFish.name}</h1>) */}
-
-      {/* <center>
-        <div>
-          <img className="front" src={currentFish} alt={currentFish} />
-          <img src={background} alt={background} />
+          <p>
+            Your tokens ({accounts}): {userTokens}
+          </p>
+          {userTokensUpdated ? (
+            _.map(userTokens, (tokens, key) => {
+              return (
+                <React.Fragment key={chance.integer()}>
+                  <Link to={`/details/${tokens[1].currentFish.issue}`}>
+                    <img key={tokens[0]} src={tokens[0]} alt="" />
+                  </Link>
+                </React.Fragment>
+              );
+            })
+          ) : (
+            <h1>false</h1>
+          )}
         </div>
-        <button onClick={generate}>Generate</button>
-        <h1 className="traits">
-          Main Traits: {fishNameTrait}, {rarity}, {variant}, {colorTrait},{" "}
-          {hexTrait}
-        </h1>
-        {accessoryATitleTrait !== "" ? (
-          <h1>
-            A:
-            <img
-              className="imageAccessory"
-              src={accessoryAImageTrait}
-              alt={accessoryAImageTrait}
-            />
-            {accessoryATitleTrait},{accessoryAColorTrait}
-          </h1>
-        ) : null}
-        {accessoryBTitleTrait !== "" ? (
-          <h1>
-            B:
-            <img
-              className="imageAccessory"
-              src={accessoryBImageTrait}
-              alt={accessoryBImageTrait}
-            />
-            {accessoryBTitleTrait},{accessoryBColorTrait}
-          </h1>
-        ) : null}
-        {accessoryCTitleTrait !== "" ? (
-          <h1>
-            C:
-            <img
-              className="imageAccessory"
-              src={accessoryCImageTrait}
-              alt={accessoryCImageTrait}
-            />
-            {accessoryCTitleTrait},{accessoryCColorTrait}
-          </h1>
-        ) : null}
-        {accessoryDTitleTrait !== "" ? (
-          <h1>
-            D:
-            <img
-              className="imageAccessory"
-              src={accessoryDImageTrait}
-              alt={accessoryDImageTrait}
-            />
-            {accessoryDTitleTrait},{accessoryDColorTrait}
-          </h1>
-        ) : null}
-        {accessoryATitleTrait === "" &&
-        accessoryBTitleTrait === "" &&
-        accessoryCTitleTrait === "" &&
-        accessoryDTitleTrait === "" ? (
-          <h1>Naked</h1>
-        ) : null}
-      </center> */}
+      </Switch>
     </div>
   );
 };
