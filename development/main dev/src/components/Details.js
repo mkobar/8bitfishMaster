@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
-
+import { useParams } from "react-router-dom";
+import { Helmet } from "react-helmet";
 const Details = ({ contract, axios }) => {
   const [data, setData] = useState();
   let { tokenId } = useParams();
@@ -27,6 +27,7 @@ const Details = ({ contract, axios }) => {
     setData(output);
     return output;
   }, [axios, contract, tokenId]);
+
   useEffect(() => {
     getTokenURI();
   }, [contract, getTokenURI]);
@@ -37,6 +38,10 @@ const Details = ({ contract, axios }) => {
   //# DO ACCESSORIES
   return (
     <div>
+      <Helmet>
+        <title>8bitfish | Details ({tokenId})</title>
+        {/* <link rel="canonical" href="http://mysite.com/example" /> */}
+      </Helmet>
       <center>
         {data !== undefined ? (
           <>
