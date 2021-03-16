@@ -5,160 +5,48 @@ import whenRare from "./components/WhenRarity/WhenRare";
 import whenEpic from "./components/WhenRarity/WhenEpic";
 import whenLegendary from "./components/WhenRarity/WhenLegendary";
 import _ from "underscore";
-import GenerateFish from "./contracts/GenerateFish.json";
 import "./App.css";
 import mergeImages from "merge-images";
 import { Canvas, Image } from "canvas";
-import Web3 from "web3";
 import axios from "axios";
 import { Switch, Route, Link } from "react-router-dom";
 import Details from "./components/Details";
+import UserProfile from "./components/UserProfile";
+import { loadWeb3, loadBlockchainData } from "./components/InitWeb3";
+import { currentUserTokens, mint, totalSupply } from "./components/Functions";
 const chance = require("chance").Chance();
+
 const App = () => {
   const [web3, setWeb3] = useState(null);
   const [accounts, setAccount] = useState(null);
   const [contract, setContract] = useState(null);
   const [totalTokens, setTotalTokens] = useState([]);
   const [recipient, setRecipient] = useState("");
-  const [userTokens, setUserTokens] = useState([]);
-  const [userTokensUpdated, setUserTokensUpdated] = useState(false);
   const [currentFish, setCurrentFish] = useState("");
+  const [accountLink, setAccountLink] = useState("");
 
-  //PUT IN ENV
+  /* ------------------------------- PUT IN ENV ------------------------------- */
   const pinata_api_key = "94400bd517a6e2878d33";
   const pinata_secret_api_key =
     "261626edb4e2063cb7b7c9cf044b8f4b0ee9f79d8d5a2fb73e06c59038dcadc3";
-  async function loadWeb3() {
-    if (window.ethereum) {
-      window.web3 = new Web3(window.ethereum);
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-    } else if (window.web3) {
-      window.web3 = new Web3(window.ethereum);
-    } else {
-      window.alert(
-        "Non-Ethereum browser detected. You should consider trying MetaMask"
-      );
-    }
-  }
-  async function loadBlockchainData() {
-    const web3 = window.web3;
-    const ethereum = window.ethereum;
-    setWeb3(web3);
-    // Load account
-    const accounts = await ethereum.request({ method: "eth_accounts" });
-    setAccount(accounts);
-    // setAccount(accounts[0]);
 
-    const networkId = await web3.eth.net.getId();
-    const networkData = GenerateFish.networks[networkId];
-    // const totalSupply = await contract.methods.totalSupply().call(); //# Console log balanceOf
-    if (networkData) {
-      const abi = GenerateFish.abi;
-      const address = networkData.address;
-      const contract = new web3.eth.Contract(abi, address);
-      setTotalTokens(await totalSupply(contract));
-      setContract(contract);
-    } else {
-      window.alert("Smart contract not deployed to detected network.");
-    }
-  }
-
-  const totalSupply = async (contract) => {
-    const totalSupply = await contract.methods.totalSupply().call();
-    const totalTokens = [];
-    for (let i = 1; i <= totalSupply; i++) {
-      await contract.methods
-        .tokens(i - 1)
-        .call()
-        .then((token) => totalTokens.push(Number(token)));
-      // setTotalTokens((currentTokens) => [tokens, ...currentTokens]);
-    }
-    return totalTokens;
-  };
-
-  const currentUserTokens = async () => {
-    const currentTotalTokens = await totalSupply(contract);
-    // const owner = accounts[0];
-    // console.log(Number(await getBalanceOf(owner))); //until balance of owner for performance
-    for (let i = 1; i <= currentTotalTokens.length; i++) {
-      if (Number(await getOwnerOf(i)) === Number(await accounts[0])) {
-        userTokens.push(await getTokenURI(i));
-      }
-    }
-    setUserTokens(userTokens);
-    setUserTokensUpdated(true);
-  };
-
-  const getTokenURI = async (tokenId) => {
-    let output;
-    await contract.methods
-      .getTokenURI(tokenId)
-      .call()
-      .then(async (data) => {
-        const url = data;
-        const tokenURIData = await axios.get(url, {
-          maxContentLength: "Infinity",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        output = tokenURIData.data;
+  const removePinFromIPFS = useCallback(async (hash) => {
+    console.log(hash);
+    const url = `https://api.pinata.cloud/pinning/unpin/${hash}`;
+    return await axios
+      .delete(url, {
+        headers: {
+          pinata_api_key,
+          pinata_secret_api_key,
+        },
+      })
+      .then(function (response) {
+        console.log("good", response);
+      })
+      .catch(function (error) {
+        console.log("bad", error);
       });
-    return output;
-  };
-
-  const transferToken = async () => {
-    const to = recipient;
-    const tokenId = 2;
-    console.log(to, tokenId);
-    if (tokenId === undefined) {
-      console.error("tokenId is undefined");
-    } else {
-      await contract.methods
-        .transferToken(to, tokenId)
-        .send({ from: accounts[0] });
-    }
-  };
-
-  const getBalanceOf = async (owner) => {
-    return await contract.methods.balanceOf(owner).call();
-    // .then((res) => console.log(res));
-  };
-
-  const getOwnerOf = async (i) => {
-    const tokenId = Number(i);
-    return Number(await contract.methods.getOwnerOf(tokenId).call());
-    // .then((res) => console.log(res));
-  };
-
-  const mint = useCallback(
-    async (hash, metadata, jsonArray) => {
-      await contract.methods
-        .mint(hash, metadata)
-        .send({ from: accounts[0] })
-        .once("transactionHash", function (hash) {
-          console.log(hash);
-        })
-
-        .on("confirmation", function (confNumber, receipt) {
-          console.log(confNumber);
-          console.log(receipt);
-          console.log("what is this");
-        })
-        .on("error", function (error) {
-          console.log(error);
-          console.log(hash);
-          removePinFromIPFS(hash).then("successfully removed", hash);
-        })
-        .then(function (receipt) {
-          setCurrentFish(jsonArray[0]);
-          console.log("sucessful");
-          console.log(receipt);
-          // will be fired once the receipt is mined
-        });
-    },
-    [accounts, contract]
-  );
+  }, []);
 
   const pinJSONtoIPFS = useCallback(
     async (fishData) => {
@@ -217,28 +105,25 @@ const App = () => {
       const metadata = `https://gateway.pinata.cloud/ipfs/${hash}`;
       console.log(hash);
       console.log(metadata);
-      mint(hash, metadata, jsonArray);
+      //# the fuck?
+      const mintRes = await mint(
+        hash,
+        metadata,
+        jsonArray,
+        contract,
+        accounts,
+        web3,
+        removePinFromIPFS
+      );
+      console.log(mintRes);
+      console.log(typeof mintRes === "string");
+      if (typeof mintRes === "string") {
+        console.log("good");
+        setCurrentFish(mintRes);
+      }
     },
-    [mint]
+    [accounts, contract, web3, removePinFromIPFS]
   );
-
-  const removePinFromIPFS = async (hash) => {
-    console.log(hash);
-    const url = `https://api.pinata.cloud/pinning/unpin/${hash}`;
-    return await axios
-      .delete(url, {
-        headers: {
-          pinata_api_key,
-          pinata_secret_api_key,
-        },
-      })
-      .then(function (response) {
-        console.log("good", response);
-      })
-      .catch(function (error) {
-        console.log("bad", error);
-      });
-  };
 
   const whatRarity = useCallback(
     async (rarity) => {
@@ -272,7 +157,15 @@ const App = () => {
 
   useEffect(() => {
     loadWeb3();
-    loadBlockchainData();
+    loadBlockchainData().then((res) => {
+      setWeb3(res.web3);
+      setAccount(res.accounts);
+      setAccountLink(res.accounts[0]);
+      setContract(res.contract);
+      totalSupply(res.contract).then((totalSupply) =>
+        setTotalTokens(totalSupply)
+      );
+    });
   }, []);
 
   return (
@@ -281,6 +174,15 @@ const App = () => {
         <Route path="/details/:tokenId">
           <Details contract={contract} axios={axios} />
         </Route>
+        <Route path="/aquarist/:account">
+          <UserProfile
+            accounts={accounts}
+            currentUserTokens={currentUserTokens}
+            chance={chance}
+            _={_}
+            contract={contract}
+          />
+        </Route>
         <div>
           {!web3 ? (
             <div>Loading Web3, accounts, and contract...</div>
@@ -288,35 +190,21 @@ const App = () => {
             <div>
               <img src={currentFish} alt="currentFish" />
               <button onClick={generate}>generate</button>
-              <button onClick={currentUserTokens}>currentusertokens</button>
               <p>{accounts}</p>
               <p>totalSupply - {totalTokens}</p>
-            </div>
-          )}
-          <label>From YOU ({accounts}) to </label>
-          <input
-            placeholder="recipient address"
-            type="text"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-          />
-          <button onClick={transferToken}>transferToken</button>
+              <label>From YOU ({accounts}) to </label>
+              <input
+                placeholder="recipient address"
+                type="text"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+              />
+              {/* <button onClick={transferToken(recipient, contract, accounts)}>transferToken</button> */}
 
-          <p>
-            Your tokens ({accounts}): {userTokens}
-          </p>
-          {userTokensUpdated ? (
-            _.map(userTokens, (tokens, key) => {
-              return (
-                <React.Fragment key={chance.integer()}>
-                  <Link to={`/details/${tokens[1].currentFish.issue}`}>
-                    <img key={tokens[0]} src={tokens[0]} alt="" />
-                  </Link>
-                </React.Fragment>
-              );
-            })
-          ) : (
-            <h1>false</h1>
+              <br />
+              <br />
+              <a href={`/aquarist/${accountLink}`}>Your Profile</a>
+            </div>
           )}
         </div>
       </Switch>

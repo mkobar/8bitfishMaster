@@ -22,26 +22,26 @@ contract GenerateFish is ERC721 {
         tokens.push(newItemId);
         return newItemId;
     }
-
-    function balanceOf(string memory _owner) public returns(uint) {
-    return(balanceOf(_owner));
-    }
-
-    function getOwnerOf(uint _tokenId) view public returns(address) {
-    return(ownerOf(_tokenId));
-    }
-
-    function transferToken(address _to, uint _tokenId) public payable {
-    _transfer(msg.sender, _to, _tokenId);
-    }
-
-    function getTokenURI(uint _tokenId) view public returns(string memory) {
-        return(tokenURI(_tokenId));
-        
-    }
-
-    function balanceOfContract() external view returns(uint){ 
-        return address(this).balance;
-    }
-    
 }
+//     function balanceOf(string memory _owner) public returns(uint) {
+//     return(balanceOf(_owner));
+//     }
+
+//     function getOwnerOf(uint _tokenId) view public returns(address) {
+//     return(ownerOf(_tokenId));
+//     }
+
+//     function transferToken(address _to, uint _tokenId) public payable {
+//     _transfer(msg.sender, _to, _tokenId);
+//     }
+
+//     function getTokenURI(uint _tokenId) view public returns(string memory) {
+//         return(tokenURI(_tokenId));
+        
+//     }
+
+//     function balanceOfContract() external view returns(uint){ 
+//         return address(this).balance;
+//     }
+    
+// }

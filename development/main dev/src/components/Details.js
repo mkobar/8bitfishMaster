@@ -3,7 +3,17 @@ import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
 const Details = ({ contract, axios }) => {
   const [data, setData] = useState();
+  const [owner, setOwner] = useState();
   let { tokenId } = useParams();
+
+  const getOwnerOf = useCallback(async () => {
+    if (contract !== null) {
+      const output = await contract.methods.ownerOf(tokenId).call();
+      setOwner(output);
+      console.log(output);
+    }
+    // .then((res) => console.log(res));
+  }, [contract, tokenId]);
 
   const getTokenURI = useCallback(async () => {
     let output;
@@ -11,7 +21,7 @@ const Details = ({ contract, axios }) => {
     if (contract !== null) {
       console.log(contract);
       await contract.methods
-        .getTokenURI(Number(tokenId))
+        .tokenURI(Number(tokenId))
         .call()
         .then(async (data) => {
           const url = data;
@@ -30,7 +40,8 @@ const Details = ({ contract, axios }) => {
 
   useEffect(() => {
     getTokenURI();
-  }, [contract, getTokenURI]);
+    getOwnerOf();
+  }, [contract, getTokenURI, getOwnerOf]);
 
   if (data !== undefined) {
     console.log(data);
@@ -46,6 +57,8 @@ const Details = ({ contract, axios }) => {
         {data !== undefined ? (
           <>
             <img src={data[0]} alt={data[0]} />
+            <h2>Owner</h2>
+            <a href={`/aquarist/${owner}`}>{owner}</a>
             <h2>Main</h2>
             <p>issue: {data[1].currentFish.issue}</p>
             <p>name: {data[1].currentFish.name}</p>
@@ -61,11 +74,9 @@ const Details = ({ contract, axios }) => {
               {data[1].currentFish.base.variant},
             </p>
             <h2>Accessories</h2>
-            <h4>Accessory A</h4>
-            {data[1].currentFish.accessories.accessoryA === "none" ? (
-              <p>none</p>
-            ) : (
+            {data[1].currentFish.accessories.accessoryA === "none" ? null : (
               <>
+                <h4>Accessory A</h4>
                 <p>
                   {data[1].currentFish.accessories.accessoryA.color} -{" "}
                   {data[1].currentFish.accessories.accessoryA.name}
@@ -76,11 +87,9 @@ const Details = ({ contract, axios }) => {
                 /> */}
               </>
             )}
-            <h4>Accessory B</h4>
-            {data[1].currentFish.accessories.accessoryB === "none" ? (
-              <p>none</p>
-            ) : (
+            {data[1].currentFish.accessories.accessoryB === "none" ? null : (
               <>
+                <h4>Accessory B</h4>
                 <p>
                   {data[1].currentFish.accessories.accessoryB.color} -{" "}
                   {data[1].currentFish.accessories.accessoryB.name}
@@ -91,11 +100,9 @@ const Details = ({ contract, axios }) => {
                 /> */}
               </>
             )}
-            <h4>Accessory C</h4>
-            {data[1].currentFish.accessories.accessoryC === "none" ? (
-              <p>none</p>
-            ) : (
+            {data[1].currentFish.accessories.accessoryC === "none" ? null : (
               <>
+                <h4>Accessory C</h4>
                 <p>
                   {data[1].currentFish.accessories.accessoryC.color} -{" "}
                   {data[1].currentFish.accessories.accessoryC.name}
@@ -106,11 +113,9 @@ const Details = ({ contract, axios }) => {
                 /> */}
               </>
             )}
-            <h4>Accessory D</h4>
-            {data[1].currentFish.accessories.accessoryD === "none" ? (
-              <p>none</p>
-            ) : (
+            {data[1].currentFish.accessories.accessoryD === "none" ? null : (
               <>
+                <h4>Accessory D</h4>
                 <p>
                   {data[1].currentFish.accessories.accessoryD.color} -
                   {data[1].currentFish.accessories.accessoryD.name}
