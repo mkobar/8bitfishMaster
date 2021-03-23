@@ -1,7 +1,10 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
-const UserProfile = ({ currentUserTokens, chance, _, accounts, contract }) => {
+import { Context } from "./Context";
+import Favicon from "../favicon.ico";
+const UserProfile = ({ currentUserTokens, chance, _ }) => {
+  const { contract, accounts } = useContext(Context);
   const [userTokens, setUserTokens] = useState([]);
   const [userTokensUpdated, setUserTokensUpdated] = useState(false);
   const [accountEqual, setAccountEqual] = useState(false);
@@ -28,13 +31,10 @@ const UserProfile = ({ currentUserTokens, chance, _, accounts, contract }) => {
   return (
     <div>
       <Helmet>
+        <link rel="icon" href={Favicon} sizes="16x16" />
         <title>8bitfish | User ({account})</title>
-        {/* <link rel="canonical" href="http://mysite.com/example" /> */}
       </Helmet>
       <center>
-        <a className="navlink" href="/">
-          home
-        </a>
         <h1>Account</h1>
         <h1>
           {account} {accountEqual ? "- (You)" : null}
@@ -43,9 +43,9 @@ const UserProfile = ({ currentUserTokens, chance, _, accounts, contract }) => {
           _.map(userTokens, (tokens, key) => {
             return (
               <React.Fragment key={chance.integer()}>
-                <a href={`/details/${tokens[1].currentFish.issue}`}>
+                <Link to={`/details/${tokens[1].currentFish.issue}`}>
                   <img key={tokens[0]} src={tokens[0]} alt="" />
-                </a>
+                </Link>
               </React.Fragment>
             );
           })

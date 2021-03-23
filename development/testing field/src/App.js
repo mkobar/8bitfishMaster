@@ -1,45 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
+import Home from "./Home";
+function App() {
+  const [counter, setCounter] = useState(0);
+  // const [variable, function()] = useState(0);
+  function increment() {
+    setCounter(counter + 1);
+  }
 
-const App = () => {
-  
-  const fishName = (number) => {
-    if (number === 1) {
-      console.log("clownFish");
-      return "clownFish";
-    } else {
-      console.log("goldfish");
-      return "goldfish";
-    }
-  };
+  function decrement() {
+    setCounter(counter - 1);
+  }
 
-  const whenCommon = () => {
-    const number = 2;
-
-    const fishBase = "red clownfish";
-    const accessoryATitle = "scarf";
-    const accessoryBTitle = "drum";
-    return {
-      currentFish: {
-        fishBase: fishBase,
-        fishName: fishName(number),
-        accessories: {
-          accessoryA: {
-            name: accessoryATitle,
-          },
-          accessoryB: {
-            name: accessoryBTitle,
-          },
-        },
-      },
-    };
-  };
-
+  function die() {
+    setCounter(0);
+  }
+  // counter variable
+  // setCounter is a function
+  // variable that will update
+  // want increment & decrement on button click
   return (
     <div>
-      <button onClick={whenCommon}>go</button>
-      <button onClick={() => console.log(whenCommon())}>console</button>
+      {counter === 3 ? <h1>its 3!</h1> : null}
+      <h1>{counter}</h1>
+      <button onClick={increment}>+</button>
+      <button onClick={decrement}>-</button>
+      <button onClick={die}>reset</button>
+      <Home />
     </div>
   );
-};
+}
 
 export default App;

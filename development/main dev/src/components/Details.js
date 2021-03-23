@@ -1,25 +1,25 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
+import { getFishData } from "./FirebaseFunctions";
+import { Context } from "./Context";
 const Details = ({ contract, axios }) => {
   const [data, setData] = useState();
   const [owner, setOwner] = useState();
-  let { tokenId } = useParams();
 
+  let { tokenId } = useParams();
+  const { fishData, setFishData } = useContext(Context);
   const getOwnerOf = useCallback(async () => {
     if (contract !== null) {
       const output = await contract.methods.ownerOf(tokenId).call();
       setOwner(output);
-      console.log(output);
     }
     // .then((res) => console.log(res));
   }, [contract, tokenId]);
-
   const getTokenURI = useCallback(async () => {
     let output;
     await contract;
     if (contract !== null) {
-      console.log(contract);
       await contract.methods
         .tokenURI(Number(tokenId))
         .call()
@@ -38,18 +38,27 @@ const Details = ({ contract, axios }) => {
     return output;
   }, [axios, contract, tokenId]);
 
+  if (typeof fishData === "object") {
+    if (data !== undefined) {
+      console.log(fishData[2][data[1].currentFish.name]);
+    }
+  }
   useEffect(() => {
     getTokenURI();
     getOwnerOf();
   }, [contract, getTokenURI, getOwnerOf]);
 
-  if (data !== undefined) {
-    console.log(data);
-  }
+  useEffect(() => {
+    getFishData(setFishData);
+  }, [setFishData]);
+
   //# DO ACCESSORIES
   return (
     <div>
       <Helmet>
+        {data !== undefined ? (
+          <link rel="icon" href={data[0]} sizes="16x16" />
+        ) : null}
         <title>8bitfish | Details ({tokenId})</title>
         {/* <link rel="canonical" href="http://mysite.com/example" /> */}
       </Helmet>
@@ -58,11 +67,58 @@ const Details = ({ contract, axios }) => {
           <>
             <img src={data[0]} alt={data[0]} />
             <h2>Owner</h2>
-            <a href={`/aquarist/${owner}`}>{owner}</a>
+            <Link to={`/aquarist/${owner}`}>{owner}</Link>
             <h2>Main</h2>
+            {typeof fishData === "object" ? (
+              <>
+                <Link
+                  style={{ textDecoration: "none" }}
+                  to={`/queryFish/color/${data[1].currentFish.base.colorTrait.toLowerCase()}`}
+                >
+                  <h3
+                    style={{
+                      color: data[1].currentFish.base.colorTrait.toLowerCase(),
+                    }}
+                  >{`There are ${
+                    fishData[0][
+                      data[1].currentFish.base.colorTrait.toLowerCase()
+                    ]
+                  } ${
+                    data[1].currentFish.base.colorTrait
+                  } fish currently in circulation`}</h3>
+                </Link>
+
+                <Link
+                  style={{ textDecoration: "none" }}
+                  to={`/queryFish/rarity/${data[1].currentFish.rarity}`}
+                >
+                  <h3 className={data[1].currentFish.rarity}>{`There are ${
+                    fishData[1][data[1].currentFish.rarity]
+                  } ${
+                    data[1].currentFish.rarity
+                  } fish currently in circulation`}</h3>
+                </Link>
+
+                <Link
+                  style={{ textDecoration: "none" }}
+                  to={`/queryFish/title/${data[1].currentFish.name}`}
+                >
+                  <h3>{`There are ${fishData[2][data[1].currentFish.name]} ${
+                    data[1].currentFish.name
+                  } currently in circulation`}</h3>
+                </Link>
+              </>
+            ) : (
+              <h3>loading...</h3>
+            )}
             <p>issue: {data[1].currentFish.issue}</p>
             <p>name: {data[1].currentFish.name}</p>
-            <p>rarity: {data[1].currentFish.rarity}</p>
+            <p>
+              rarity:{" "}
+              <span className={data[1].currentFish.rarity}>
+                <strong>{data[1].currentFish.rarity}</strong>
+              </span>
+            </p>
             <p>
               date minted: {data[1].currentFish.date.day} @{" "}
               {data[1].currentFish.date.time}
@@ -130,9 +186,6 @@ const Details = ({ contract, axios }) => {
         ) : (
           <h1>loading or doesn't exist</h1>
         )}
-        <a className="navlink" href="/">
-          home
-        </a>
       </center>
     </div>
   );

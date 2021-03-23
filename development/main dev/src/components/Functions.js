@@ -1,16 +1,37 @@
 import axios from "axios";
-
+import { addFish } from "./FirebaseFunctions";
 export const currentUserTokens = async (account, contract) => {
   const userTokens = [];
-  // console.log(typeof account === "string");
-  // const owner = typeof account === "string" ? account : accounts[0];
-  // console.log(Number(await getBalanceOf(owner, contract))); //until balance of owner for performance
+  // const balance = await getBalanceOf(account, contract); //until balance of owner for performance
+  // console.log(balance);
   const currentTotalTokens = await totalSupply(contract);
+  console.log("%cgood & pushed", "color:#42f554");
+  console.log("%cbad", "color:#ff3333");
   for (let i = 1; i <= currentTotalTokens.length; i++) {
     if (Number(await getOwnerOf(i, contract)) === Number(account)) {
       userTokens.push(await getTokenURI(i, contract));
+      console.log(`%c${i}`, `color:#42f554`);
+    } else {
+      console.log(`%c${i}`, `color:#ff3333`);
     }
   }
+
+  // let currentBalance = 0;
+  // do {
+  //   for (let i = 1; i <= currentTotalTokens.length; i++) {
+  //     if (Number(await getOwnerOf(i, contract)) === Number(account)) {
+  //       userTokens.push(await getTokenURI(i, contract));
+  //       currentBalance++;
+  //       console.log(currentBalance);
+  //       console.log(balance);
+  //       console.log("?", currentBalance !== balance);
+  //       console.log("pushed", i);
+  //     } else {
+  //       console.log("bad", i);
+  //     }
+  //   }
+  // } while (currentBalance !== balance);
+
   return userTokens;
 };
 
@@ -45,10 +66,15 @@ export const mint = async (
       return removePinFromIPFS(hash).then("successfully removed", hash);
     })
     .then(function (receipt) {
-      console.log("sucessful");
       console.log(receipt);
+      const id = jsonArray[1].currentFish.issue.toString();
+      const title = jsonArray[1].currentFish.name;
+      const rarity = jsonArray[1].currentFish.rarity;
+      const color = jsonArray[1].currentFish.base.colorTrait;
+      const imageData = jsonArray[0];
+      addFish(id, title, rarity, color, imageData);
+      console.log("sucessful");
       return jsonArray[0];
-      // will be fired once the receipt is mined
     });
   return output;
 };
@@ -77,7 +103,7 @@ export const getOwnerOf = async (tokenId, contract) => {
 };
 
 export const getBalanceOf = async (owner, contract) => {
-  return await contract.methods.balanceOf(owner).call();
+  return Number(await contract.methods.balanceOf(owner).call());
   // .then((res) => console.log(res));
 };
 
@@ -104,5 +130,25 @@ export const totalSupply = async (contract) => {
       .then((token) => totalTokens.push(Number(token)));
     // setTotalTokens((currentTokens) => [tokens, ...currentTokens]);
   }
+  return totalTokens;
+};
+
+export const displayTotalSupply = async (contract) => {
+  const totalSupply = await contract.methods.totalSupply().call();
+  const totalTokens = [];
+  for (let i = 1; i <= totalSupply; i++) {
+    totalTokens.push(
+      await getTokenURI(i, contract).then((res) => {
+        return res[0];
+      })
+    );
+
+    // await contract.methods
+    //   .tokens(i - 1)
+    //   .call()
+    //   .then((token) => totalTokens.push(Number(token)));
+    // setTotalTokens((currentTokens) => [tokens, ...currentTokens]);
+  }
+  // console.log(totalTokens);
   return totalTokens;
 };

@@ -1,0 +1,34 @@
+img {
+  width: 200px;
+  position: relative;
+  z-index: 3;
+}
+
+.imageAccessory {
+  width: 100px;
+}
+.front {
+  width: 300px;
+  position: absolute;
+  z-index: 10;
+}
+
+.common {
+  color: #c6c6c6;
+}
+
+.uncommon {
+  color: #acd482;
+}
+
+.rare {
+  color: #6d9ad1;
+}
+
+.epic {
+  color: #c586ba;
+}
+
+.legendary {
+  color: #ffda6f;
+}
