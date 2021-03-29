@@ -63,8 +63,8 @@ const whenRare = (totalTokens) => {
 
     const accessoryC = () => {
       const value = chance.weighted(
-        [null, "WC1E", "WC2E", "WC3E", "WC4E", "WC5E"],
-        [1, 1, 1, 1, 1, 1]
+        [null, "WC1E", "WC2E", "WC3E", "WC4E"],
+        [1, 1, 1, 1, 1]
       );
       if (value !== null) {
         return {

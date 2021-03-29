@@ -20,7 +20,7 @@ import {
   displayTotalSupply,
 } from "./components/Functions";
 // import firebase from "./components/firebase";
-import { getFish } from "./components/FirebaseFunctions";
+import { getFish, uploadFish } from "./components/FirebaseFunctions";
 import { Context } from "./components/Context";
 import { Helmet } from "react-helmet";
 import Favicon from "./favicon.ico";
@@ -93,16 +93,16 @@ const App = () => {
       await mergeImages(inputImage(), {
         Canvas: Canvas,
         Image: Image,
-      }).then((currentFish) => {
-        // console.log(currentFish);
-        jsonArray.push(currentFish, fishData);
+      }).then(async (currentFish) => {
+        /// For data:image
+        const tokenId = fishData.currentFish.issue; ///cut
+        const imageurl = await uploadFish(currentFish, tokenId); ///cut
+        jsonArray.push(imageurl, fishData); ///imageurl -> currentFish
         console.log(jsonArray);
       });
 
       const url = `https://api.pinata.cloud/pinning/pinJSONToIPFS`;
-      // let fishData = fishData;
       const data = JSON.stringify(jsonArray);
-      // let data = JSON.parse(data1);
       console.log(jsonArray[1].currentFish.name);
       const res = await axios.post(url, data, {
         maxContentLength: "Infinity",
@@ -187,7 +187,6 @@ const App = () => {
       getFish();
     });
   }, []);
-
   return (
     <div className="App">
       <Context.Provider value={{ fishData, setFishData, accounts, contract }}>
@@ -259,13 +258,15 @@ const App = () => {
 
 const GeneratePage = ({ generate, currentFish, recentlyGenerated }) => {
   return (
-    <div>
+    <div className="generatePage">
       {currentFish && recentlyGenerated !== "" ? (
         <Link to={`/details/${recentlyGenerated}`}>
           <img src={currentFish} alt="currentFish" />
         </Link>
       ) : null}
-      <button onClick={generate}>generate</button>
+      <button className="generateButton" onClick={generate}>
+        generate
+      </button>
     </div>
   );
 };

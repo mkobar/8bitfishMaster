@@ -1,31 +1,12 @@
-import React, { useState } from "react";
-import Home from "./Home";
+import React, { useEffect, useState } from "react";
+
 function App() {
-  const [counter, setCounter] = useState(0);
-  // const [variable, function()] = useState(0);
-  function increment() {
-    setCounter(counter + 1);
-  }
-
-  function decrement() {
-    setCounter(counter - 1);
-  }
-
-  function die() {
-    setCounter(0);
-  }
-  // counter variable
-  // setCounter is a function
-  // variable that will update
-  // want increment & decrement on button click
   return (
     <div>
-      {counter === 3 ? <h1>its 3!</h1> : null}
-      <h1>{counter}</h1>
-      <button onClick={increment}>+</button>
-      <button onClick={decrement}>-</button>
-      <button onClick={die}>reset</button>
-      <Home />
+      <img
+        src="https://firebasestorage.googleapis.com/v0/b/bitfish-48620.appspot.com/o/assets_SF3.png?alt=media&token=ea881c66-4efc-4fd7-bc96-f08c4f8380bd"
+        alt="https://firebasestorage.googleapis.com/v0/b/bitfish-48620.appspot.com/o/assets_SF3.png?alt=media&token=ea881c66-4efc-4fd7-bc96-f08c4f8380bd"
+      />
     </div>
   );
 }

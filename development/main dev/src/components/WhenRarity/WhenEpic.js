@@ -96,7 +96,7 @@ const whenEpic = (totalTokens) => {
     };
 
     const accessoryC = () => {
-      const value = chance.weighted([null, "DC1E", "DC2E"], [1, 1, 1, 1, 1]);
+      const value = chance.weighted([null, "DC1E", "DC2E"], [1, 1, 1]);
       if (value !== null) {
         return {
           asset: media[value].asset,

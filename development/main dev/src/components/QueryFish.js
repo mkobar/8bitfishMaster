@@ -30,9 +30,11 @@ const QueryFish = ({ Favicon, _, chance }) => {
       console.log("contract not ready");
     }
   }, [ref, category, query, contract]);
+
   useEffect(() => {
     runQuery();
   }, [runQuery]);
+
   return (
     <div>
       <Helmet>

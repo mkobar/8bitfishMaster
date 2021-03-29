@@ -2,6 +2,8 @@ import firebase from "./firebase";
 const db = firebase.firestore();
 const ref = db.collection("fish");
 const refData = db.collection("fishData");
+
+const storageRef = firebase.storage().ref();
 export async function addFish(id, title, rarity, colorUpper, image) {
   const color = colorUpper.toLowerCase();
   const newFish = {
@@ -53,4 +55,23 @@ export function getFish() {
     console.log(items);
     //   setFish(items);
   });
+}
+
+export async function uploadFish(message, issue) {
+  const childRef = storageRef.child(`${issue}.png`);
+  await childRef.putString(message, "data_url");
+
+  return await childRef.getDownloadURL();
+}
+
+export function deleteUpload(issue) {
+  const childRef = storageRef.child(`${issue}.png`);
+  childRef
+    .delete()
+    .then(() => {
+      console.log("sucessfully deleted file");
+    })
+    .catch((error) => {
+      console.log("error deleting file", error);
+    });
 }
